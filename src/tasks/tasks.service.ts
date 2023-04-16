@@ -1,53 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { Task, TaskStatus } from './task.entity';
-import { v4 } from 'uuid';
-import { UpdateTaskDto } from './dto/task.dto';
+import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Tasks, TasksDocument } from './schema/task.schema';
+import { TaskStatus } from './entities/task.entity';
 
 @Injectable()
 export class TasksService {
-  // simulate a database
-  private tasks: Task[] = [
-    {
-      id: v4(),
-      title: 'first task',
-      description: 'some task',
+  constructor(
+    @InjectModel(Tasks.name) private tasksModel: Model<TasksDocument>,
+  ) {}
+
+  async getAllTasks() {
+    return await this.tasksModel.find();
+  }
+
+  async createTask(task: CreateTaskDto) {
+    const createdTask = await this.tasksModel.create({
+      ...task,
       status: TaskStatus.PENDING,
-    },
-  ];
+    });
 
-  getAllTasks(): Task[] {
-    return this.tasks;
+    return createdTask;
   }
 
-  createTask(title: string, description: string) {
-    const task: Task = {
-      title,
-      description,
-      status: TaskStatus.PENDING,
-      id: v4(),
-    };
-
-    this.tasks.push(task);
-
-    return task;
+  async updateTask(id: string, updatedFields: UpdateTaskDto) {
+    return await this.tasksModel.updateOne({ id }, updatedFields);
   }
 
-  updateTask(id: string, updatedFields: UpdateTaskDto): Task {
-    const task = this.getTaskById(id);
-    const updatedTask = Object.assign(task, updatedFields);
-
-    this.tasks = this.tasks.map((task) =>
-      task.id === id ? updatedTask : task,
-    );
-
-    return updatedTask;
+  async getTaskById(id: string) {
+    return await this.tasksModel.findById(id);
   }
 
-  private getTaskById(id: string): Task {
-    return this.tasks.find((task) => task.id === id);
-  }
-
-  deleteTask(taskId: string) {
-    this.tasks = this.tasks.filter((task) => task.id !== taskId);
+  async deleteTask(id: string) {
+    this.tasksModel.deleteOne({ id });
   }
 }

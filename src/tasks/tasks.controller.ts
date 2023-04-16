@@ -21,7 +21,7 @@ export class TasksController {
 
   @Post()
   createTask(@Body() task: CreateTaskDto) {
-    return this.tasksService.createTask(task.title, task.description);
+    return this.tasksService.createTask(task);
   }
 
   @Delete()
